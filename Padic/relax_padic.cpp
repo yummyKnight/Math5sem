@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <cassert>
+#include <cmath>
 
 using namespace std;
 
@@ -92,6 +93,20 @@ ostream &operator<<(ostream &os, const padicRepresentation &number) {
     return os;
 }
 
+slong padicRepresentation::to10base() {
+    slong base10 = 0;
+//    if negative
+//    slong prime = prime_base;
+//    base10 += abs(coef.at(0) - prime) * pow(prime_base, val);
+//    for (uslong i = 1; i < coef.size(); ++i) {
+//        base10 += abs(coef.at(i) - prime + 1) * pow(prime_base, i + val);
+//    }
+    for (uslong i = 0; i < coef.size(); ++i) {
+        base10 += coef.at(i) * pow(prime_base, i + val);
+    }
+    return base10;
+}
+
 
 slong padicNumber::next(long long i) {
     assert(i > 0);
@@ -121,7 +136,7 @@ slong padicNumber::computeOX() {
     return coef.back();
 }
 
-padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) : op1(op1), op2(op2) {
+padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(0, op1, op2) {
     if (op1.prime_base != op2.prime_base)
         throw invalid_argument("Bases in sum should be identical");
 //  because start from 0
@@ -165,18 +180,6 @@ slong padicSum::next(long long i) {
     }
 }
 
-void padicSum::compute_to_N(long long int N) {
-    for (long long int i = 0; i < N; ++i) {
-        next(i + 1);
-    }
-}
-
-void padicSum::compute_to_max() {
-    slong max_N = max(op1.prec, op2.prec) + 1; // +1 to overflow
-    compute_to_N(max_N);
-}
-
-
 slong padicSub::next(long long i) {
     assert(i > 0);
     if (i - this->prec > 1)
@@ -193,7 +196,7 @@ slong padicSub::next(long long i) {
     }
 }
 
-padicSub::padicSub(padicRepresentation &op1, padicRepresentation &op2) : op1(op1), op2(op2) {
+padicSub::padicSub(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(0, op1, op2) {
     if (op1.prime_base != op2.prime_base)
         throw invalid_argument("Bases in sum should be identical");
 //  because start from 0
@@ -202,13 +205,17 @@ padicSub::padicSub(padicRepresentation &op1, padicRepresentation &op2) : op1(op1
     this->prime_base = op2.prime_base;
 }
 
-void padicSub::compute_to_N(long long int N) {
+
+padicOperator::padicOperator(slong excess, padicRepresentation &op1, padicRepresentation &op2) : excess(excess),
+                                                                                                 op1(op1), op2(op2) {}
+
+void padicOperator::compute_to_N(long long int N) {
     for (long long int i = 0; i < N; ++i) {
         next(i + 1);
     }
 }
 
-void padicSub::compute_to_max() {
+void padicOperator::compute_to_max() {
     slong max_N = max(op1.prec, op2.prec) + 1; // +1 to overflow
     compute_to_N(max_N);
 }
