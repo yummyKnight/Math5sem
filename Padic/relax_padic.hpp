@@ -10,13 +10,14 @@
 #include <cstdlib>
 
 typedef unsigned long long uslong;
+typedef long long int slong;
 
 class padicRepresentation {
 public:
-    virtual uslong next(long long i) = 0;
-    long long int prec; // long long because arithmetic operations leads to overflow
-    std::vector<uslong> coef;
-    long long int val;
+    virtual long long next(long long i) = 0;
+    slong prec; // long long because arithmetic operations leads to overflow
+    std::vector<long long> coef;
+    slong val;
     uslong prime_base;
     friend std::ostream &operator<<(std::ostream &os, const padicRepresentation &number);
     padicRepresentation() {};
@@ -26,13 +27,13 @@ private:
 
 class padicNumber : public padicRepresentation {
 public:
-    padicNumber(long long int base10, uslong prime_base, uslong init_prec = 20);
+    padicNumber(slong base10, uslong prime_base, uslong init_prec = 20);
 
-    uslong next(long long i) override;
+    slong next(long long i) override;
 private:
     bool is_negative;
-    uslong Ox;
-    uslong computeOX();
+    slong Ox;
+    slong computeOX();
 
 };
 
@@ -41,13 +42,26 @@ class padicSum : public padicRepresentation {
 private:
     padicRepresentation &op1;
     padicRepresentation &op2;
-    uslong excess = 0;
+    slong excess = 0;
 public:
-    uslong next(long long i) override;
+    slong next(long long i) override;
     padicSum(padicRepresentation &op1, padicRepresentation &op2);
-    void compute_to_N(long long int N);
+    void compute_to_N(slong N);
     void compute_to_max();
-    uslong computeSum();
+    slong computeSum();
+};
+
+class padicSub : public padicRepresentation {
+private:
+    padicRepresentation &op1;
+    padicRepresentation &op2;
+    slong excess = 0;
+public:
+    slong next(long long i) override;
+    padicSub(padicRepresentation &op1, padicRepresentation &op2);
+    void compute_to_N(slong N);
+    void compute_to_max();
+    slong computeSub();
 };
 
 #endif //GINAC_RELAX_PADIC_HPP
