@@ -34,7 +34,7 @@ padicNumber::padicNumber(long long base10, uslong prime_base, uslong init_prec) 
     long long val = 0;
     std::vector<uslong> coef;
     is_negative = base10 < 0;
-    x = base10;
+    x = abs(base10);
     if (!is_prime(prime_base))
         throw std::invalid_argument("P should be prime");
 
@@ -43,19 +43,26 @@ padicNumber::padicNumber(long long base10, uslong prime_base, uslong init_prec) 
         val++;
         d = reduce(x, prime_base);
     }
+
     if (is_negative) {
         coef.push_back(prime_base - d);
     } else {
         coef.push_back(d);
     }
-    for (j = 0; x != 0 || j > init_prec - val; j++) {
-        d = reduce(x, prime_base);
-        if (is_negative) {
+
+    if (is_negative) {
+        for (j = 0; j < init_prec - val; j++) {
+            d = reduce(x, prime_base);
             coef.push_back(prime_base - d - 1);
-        } else {
+        }
+    } else {
+        for (j = 0; x != 0 && j < init_prec - val; j++) {
+            d = reduce(x, prime_base);
             coef.push_back(d);
         }
     }
+
+
     // prec тот макимум в масиве который уже посчитан
     this->prec = coef.size() + val;
     this->Ox = x;
@@ -122,7 +129,7 @@ padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) : op1(op1
 
 uslong padicSum::computeSum() {
     uslong base = op2.prime_base;
-    uslong t = op1.next(prec + 1) + op2.next(prec + 1) + excess;
+    uslong t = op1.next(prec) + op2.next(prec) + excess;
     if (t < base) {
         excess = 0;
         coef.push_back(t);
@@ -130,7 +137,10 @@ uslong padicSum::computeSum() {
     } else {
         excess = 1;
         uslong res = t - base;
-        coef.push_back(res);
+        if (res == 0 && prec - 1 - val == 0)
+            this->val++;
+        else
+            coef.push_back(res);
         return res;
     }
 }
@@ -140,8 +150,8 @@ uslong padicSum::next(long long i) {
     if (i - this->prec > 1)
         throw invalid_argument("Padic number next should get i - this->prec >= 1");
     if (i > this->prec || this->prec == 0) {
-        auto res = computeSum();
         this->prec++;
+        auto res = computeSum();
         return res;
     } else {
         if (i < val + 1)
@@ -158,7 +168,7 @@ void padicSum::compute_to_N(long long int N) {
 }
 
 void padicSum::compute_to_max() {
-    uslong max_N = max(op1.prec, op2.prec);
+    uslong max_N = max(op1.prec, op2.prec) + 1; // +1 to overflow
     compute_to_N(max_N);
 }
 
