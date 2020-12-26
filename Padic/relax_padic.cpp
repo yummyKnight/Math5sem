@@ -7,6 +7,7 @@
 #include <vector>
 #include <stdexcept>
 #include <string>
+#include <cassert>
 
 using namespace std;
 
@@ -25,7 +26,6 @@ uslong reduce(uslong &x, uslong prime_base) {
     x = x / prime_base;
     return d;
 }
-
 
 padicNumber::padicNumber(long long base10, uslong prime_base, uslong init_prec) {
     uslong x;
@@ -48,7 +48,7 @@ padicNumber::padicNumber(long long base10, uslong prime_base, uslong init_prec) 
     } else {
         coef.push_back(d);
     }
-    for (j = 0; x != 0 || j > init_prec; j++) {
+    for (j = 0; x != 0 || j > init_prec - val; j++) {
         d = reduce(x, prime_base);
         if (is_negative) {
             coef.push_back(prime_base - d - 1);
@@ -56,15 +56,15 @@ padicNumber::padicNumber(long long base10, uslong prime_base, uslong init_prec) 
             coef.push_back(d);
         }
     }
-
-    this->prec = coef.size();
+    // prec тот макимум в масиве который уже посчитан
+    this->prec = coef.size() + val;
     this->Ox = x;
     this->prime_base = prime_base;
     this->coef = coef;
     this->val = val;
 }
 
-ostream &operator<<(ostream &os, const padicNumber &number) {
+ostream &operator<<(ostream &os, const padicRepresentation &number) {
     uslong i = 0;
     auto coef = number.coef.at(i);
     if (!coef) {
@@ -82,13 +82,22 @@ ostream &operator<<(ostream &os, const padicNumber &number) {
     return os;
 }
 
-uslong padicNumber::next(uslong i) {
+
+uslong padicNumber::next(long long i) {
+    assert(i > 0);
     if (i - this->prec > 1)
         throw invalid_argument("Padic number next should get i - this->prec >= 1");
-    if (i > this->prec) {
+    if (i > this->prec || this->prec == 0) {
+        auto res = computeOX();
         this->prec++;
-        return computeOX();
-    } else return coef.at(i);
+        return res;
+    } else {
+        if (i < val + 1)
+            return 0;
+        else
+            return coef.at(i - 1 - val);
+    }
+
 }
 
 uslong padicNumber::computeOX() {
@@ -105,42 +114,54 @@ uslong padicNumber::computeOX() {
 padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) : op1(op1), op2(op2) {
     if (op1.prime_base != op2.prime_base)
         throw invalid_argument("Bases in sum should be identical");
-    val_diff = op1.val - op2.val;
-    prec = 0;
+//  because start from 0
     this->val = min(op1.val, op2.val);
+    this->prec = val;
+    this->prime_base = op2.prime_base;
 }
 
 uslong padicSum::computeSum() {
-    if (val_diff < 0) {
-        val_diff++;
-        return op1.next(prec);
+    uslong base = op2.prime_base;
+    uslong t = op1.next(prec + 1) + op2.next(prec + 1) + excess;
+    if (t < base) {
+        excess = 0;
+        coef.push_back(t);
+        return t;
+    } else {
+        excess = 1;
+        uslong res = t - base;
+        coef.push_back(res);
+        return res;
     }
-    if (val_diff > 0) {
-        val_diff--;
-        return op2.next(prec);
-    }
-    if (val_diff == 0) {
-        uslong base = op2.prime_base;
-        uslong t = op1.next(prec) + op2.next(prec) + excess;
-        if (t < base) {
-            excess = 0;
-            return t;
-        } else {
-            excess = 1;
-            return t - base;
-        }
-    }
-    throw logic_error("computeSum val not fir in any if");
 }
 
-uslong padicSum::next(uslong i) {
+uslong padicSum::next(long long i) {
+    assert(i > 0);
     if (i - this->prec > 1)
         throw invalid_argument("Padic number next should get i - this->prec >= 1");
-    if (i > this->prec) {
+    if (i > this->prec || this->prec == 0) {
+        auto res = computeSum();
         this->prec++;
-        return computeSum();
-    } else return coef.at(i);
+        return res;
+    } else {
+        if (i < val + 1)
+            return 0;
+        else
+            return coef.at(i - 1 - val);
+    }
 }
+
+void padicSum::compute_to_N(long long int N) {
+    for (long long int i = 0; i < N; ++i) {
+        next(i + 1);
+    }
+}
+
+void padicSum::compute_to_max() {
+    uslong max_N = max(op1.prec, op2.prec);
+    compute_to_N(max_N);
+}
+
 
 
 
