@@ -214,25 +214,8 @@ slong padicSub::next() {
 mulRemPadic::mulRemPadic(padicRepresentation &op1, uslong uScalar) : padicRepresentation(op1),
                                                                      op1(op1), u_scalar(uScalar) {}
 
-long long mulRemPadic::next(long long i) {
-
-    assert(i > 0);
-    if (i - this->prec > 1)
-        throw invalid_argument("Padic number next should get i - this->prec >= 1");
-    if (i > this->prec || this->prec == 0) {
-        this->prec++;
-        auto res = computeNext();
-        return res;
-    } else {
-        if (i < val + 1)
-            return 0;
-        else
-            return coef.at(i - 1 - val);
-    }
-}
-
-slong mulRemPadic::computeNext() {
-    uslong res = (op1.next(prec) * u_scalar) % prime_base;
+long long mulRemPadic::next() {
+    uslong res = (op1.get(prec) * u_scalar) % prime_base;
     coef.push_back(res);
     return res;
 }
