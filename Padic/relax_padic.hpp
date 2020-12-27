@@ -12,7 +12,7 @@
 typedef unsigned long long uslong;
 typedef long long int slong;
 
-long getLn(long long l);
+slong getLn(long long l);
 
 class padicRepresentation {
 public:

@@ -9,7 +9,7 @@
 #include <string>
 #include <cassert>
 #include <cmath>
-
+#include <algorithm>
 using namespace std;
 
 
@@ -49,6 +49,7 @@ slong padicRepresentation::to10base() {
 }
 
 long long padicRepresentation::get(long long i) {
+    //std::cout <<"i  "<< i <<endl;
     assert(i > 0);
     if (i - this->prec > 1)
         throw invalid_argument("Padic number next should get i - this->prec >= 1");
@@ -101,8 +102,8 @@ padicNumber::padicNumber(long long base10, uslong prime_base, uslong init_prec) 
     std::vector<slong> coef;
     is_negative = base10 < 0;
     x = abs(base10);
-    if (!is_prime(prime_base) and prime_base == 1)
-        throw std::invalid_argument("P should be prime");
+//    if (!is_prime(prime_base) and prime_base == 1)
+//        throw std::invalid_argument("P should be prime");
 
     d = reduce(x, prime_base);
     while (d == 0) {
@@ -221,7 +222,7 @@ padicMul::padicMul(padicRepresentation &op1, padicRepresentation &op2) : padicOp
 slong padicMul::computeMul() {
     // НЕ готов
     uslong base = op2.prime_base;
-    long long t = op1.next(prec) - op2.next(prec) - excess;
+    long long t =0;// op1.next(prec) - op2.next(prec) - excess;
 
     if (t >= 0) {
         excess = 0;
@@ -240,9 +241,9 @@ slong padicMul::computeMul() {
     return 0;
 }
 
-long getLn(long n) {
+slong getLn(slong n) {
 
-    long l = 0, mul_l = 2, n_2 = n + 2;
+    slong l = 0, mul_l = 2, n_2 = n + 2;
     while (n_2 % mul_l == 0 && n_2 >= mul_l) {
         if (mul_l == n_2)
             break;
@@ -253,86 +254,105 @@ long getLn(long n) {
 }
 
 slong padicMul::next() {
-
+    slong n = prec-1;
+    slong ta = 0, tb = 0;
+    //std::cout << "     " <<n <<"      "<< std::endl;
     // начало алгоритма умножения
     // дополнения векторов ya и yb
-    long ta = 0, tb = 0;
-    long n = prec;
-    slong l2n = getLn(n * 2), ln = getLn(n), l2n1 = getLn(n * 2 + 1), ln1 = getLn(n + 1);
-    std::vector<slong> ya_new(0, l2n + 1), yb_new(0, l2n + 1);
-    std::vector<slong> ya1_new(0, l2n1 + 1), yb1_new(0, l2n1 + 1);
+    ;
+
+    slong l2n = getLn(n * 2), ln = getLn(n), l2n1 = getLn(n * 2 + 1);
+    std::vector<slong> ya_new(l2n + 1, 0), yb_new( l2n + 1, 0);
+    std::vector<slong> ya1_new( l2n1 + 1, 0), yb1_new( l2n1 + 1, 0);
     ya.push_back(ya_new);
     ya.push_back(ya1_new);
     yb.push_back(yb_new);
     yb.push_back(yb1_new);
 
-    op1.get(n);
-    op2.get(n);
+    op1.get(n+1);
+    op2.get(n+1);
     // вычисление алгоритмов
     slong coef_a, coef_b, left, right;
     slong pow_prime = 1;
+
     for (slong q = 0; q <= ln; q++) {
-        long q_2 = pow(2, q);
-        int k = (n + 2) / q_2;
+        //std::cout << "q " << q <<" "<< std::endl;
+        slong q_2 = pow(2, q);
+        slong  k = (n + 2) / q_2;
         ta += ya.at(n).at(q);
         tb += yb.at(n).at(q);
-        slong coef_a = 0, coef_b = 0, left = q_2, right = q_2 * 2;
-        slong pow_prime = 1;
-        for (slong i = left; i < right; i++) {
+        slong coef_a = 0, coef_b = 0, left = q_2, right = q_2 * 2-1;
+        pow_prime = 1;
+        for (slong i = left-1, i_k = left*(k-1)-1 ; i < right; i++,i_k++) {
             // compute to N
-            coef_a += op1.coef.at(i - 1) * pow_prime;
-            coef_b += op2.coef.at(i * k - 1) * pow_prime;
+            //std::cout << "+ " << i <<" "<< i * (k-1) - 1<< std::endl;
+            coef_a += op1.get(i+1) * pow_prime;
+            coef_b += op2.get(i_k+1) * pow_prime;
+            //assert(n != 4 || q !=1 || i != 3) ;
             pow_prime *= this->prime_base;
         }
 
         ta += coef_a * coef_b;
-        if (k == 2) {
-            break;
-        }
+        if (k == 2) {break;}
+
         coef_a = 0;
         coef_b = 0;
         pow_prime = 1;
-        for (int i = left; i <= right; i++) {
-            coef_a += op1.coef.at(i * k - 1) * pow_prime;
-            coef_b += op2.coef.at(i - 1) * pow_prime;
+
+        for (slong i = left-1, i_k = left*(k-1)-1 ; i < right; i++,i_k++) {
+            coef_a += op1.get( i_k+1 ) * pow_prime;
+            coef_b += op2.get( i +1) * pow_prime;
             pow_prime *= this->prime_base;
         }
+
         tb += coef_a * coef_b;
 
     }
+    //assert(n != 4) ;
     right = pow(2, ln + 1);
     slong sa = ta;
 
     pow_prime = 1;
-    if (this->coef.size() < n + right)
+    if (this->coef.size() < n + right+1)
         this->coef.resize(n + right, 0);
-    for (slong i = n; i <= n + right; i++) {
-        sa += this->coef.at(i) * pow_prime;
+    //std::cout << coef.size();
+    for (slong i = n; i < n + right; i++) {
+        sa += this->coef.at(i- val) * pow_prime;
         pow_prime *= this->prime_base;
     }
+
     pow_prime = 1;
     for (slong i = 0; i < right; i++) {
-        this->coef.at(n + i) = sa / pow_prime % this->prime_base;
+        this->coef.at(n + i- val) = sa / pow_prime % this->prime_base;
         pow_prime *= this->prime_base;
     }
     if (n + 2 != right)
-        ya.at(n + right).at(ln) = sa;
+        ya.at(n + right).at(ln) = sa / pow_prime;
 
     slong sb = tb;
     pow_prime = 1;
     right = pow(2, ln + 1);
 
-    for (slong i = n; i <= n + right; i++) {
-        sb += this->coef.at(i) * pow_prime;
+    for (slong i = n; i < n + right; i++) {
+        sb += this->coef.at(i- val) * pow_prime;
         pow_prime *= this->prime_base;
     }
     pow_prime = 1;
     for (slong i = 0; i < right; i++) {
-        this->coef.at(n + i) = sa / pow_prime % this->prime_base;
+        this->coef.at(n + i - val) = sb / pow_prime % this->prime_base;
         pow_prime *= this->prime_base;
     }
-    if (n + 2 != right)
-        yb.at(n + right).at(ln) = sb;
 
+    if (n + 2 != right) {
+        yb.at(n + right ).at(ln) = sb / pow_prime;
+    }
+
+    //std::cout << "sa sb       " << sa <<" "<< sb << " " << this->coef.at(n-val)<< std::endl;
+
+    if (coef.at(n-val) == 0 && n == this->val) {
+        //std::cout << "coef  n  val  " << coef.at(n-val) <<" "<< n << " " << val<< std::endl;
+        this->val++;
+        coef.erase(coef.begin() );
+    }
     return this->coef.at(n);
 }
