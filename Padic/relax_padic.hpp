@@ -12,6 +12,8 @@
 typedef unsigned long long uslong;
 typedef long long int slong;
 
+long getLn(long long l);
+
 class padicRepresentation {
 public:
     virtual long long next(long long i) = 0;
@@ -69,5 +71,16 @@ public:
     padicSub(padicRepresentation &op1, padicRepresentation &op2);
     slong computeSub();
 };
+
+class padicMul : public padicOperator {
+private:
+    std::vector<std::vector<long long>> ya;
+    std::vector<std::vector<long long>> yb;
+public:
+    slong next(long long j) override;
+    padicMul(padicRepresentation &op1, padicRepresentation &op2);
+    slong computeMul();
+};
+
 
 #endif //GINAC_RELAX_PADIC_HPP
