@@ -72,9 +72,9 @@ void padicOperator::compute_to_N(long long int N) {
     }
 }
 
-void padicOperator::compute_to_max() {
-    slong max_N = max(op1.prec, op2.prec) + 1; // +1 to overflow
-    compute_to_N(max_N);
+void padicOperator::compute_to_max() {// +1 to overflow
+    assert(max_prec > 0);
+    compute_to_N(max_prec);
 }
 
 bool is_prime(slong n) {
@@ -155,6 +155,7 @@ padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) : padicOp
     this->val = min(op1.val, op2.val);
     this->prec = val;
     this->prime_base = op2.prime_base;
+    max_prec = max(op1.prec, op2.prec) + 1; // 1 for overflow
 }
 
 slong padicSum::next() {
@@ -183,6 +184,7 @@ padicSub::padicSub(padicRepresentation &op1, padicRepresentation &op2) : padicOp
     this->val = min(op1.val, op2.val);
     this->prec = val;
     this->prime_base = op2.prime_base;
+    max_prec = max(op1.prec, op2.prec);
 }
 
 slong padicSub::next() {
@@ -208,9 +210,12 @@ padicMul::padicMul(padicRepresentation &op1, padicRepresentation &op2) : padicOp
     if (op1.prime_base != op2.prime_base)
         throw invalid_argument("Bases in Mul should be identical");
 //  because start from 0
-    this->val = min(op1.val, op2.val);
-    this->prec = val;
+    // TODO: val == 0 ONLY for tests
+    this->val = 0;
+    // TODO: prec = val
+    this->prec = 0;
     this->prime_base = op2.prime_base;
+    max_prec = op1.prec + op2.prec - 1;
 }
 
 slong padicMul::computeMul() {
@@ -254,8 +259,8 @@ slong padicMul::next() {
     long ta = 0, tb = 0;
     long n = prec;
     slong l2n = getLn(n * 2), ln = getLn(n), l2n1 = getLn(n * 2 + 1), ln1 = getLn(n + 1);
-    std::vector <slong> ya_new(0, l2n + 1), yb_new(0, l2n + 1);
-    std::vector <slong> ya1_new(0, l2n1 + 1), yb1_new(0, l2n1 + 1);
+    std::vector<slong> ya_new(0, l2n + 1), yb_new(0, l2n + 1);
+    std::vector<slong> ya1_new(0, l2n1 + 1), yb1_new(0, l2n1 + 1);
     ya.push_back(ya_new);
     ya.push_back(ya1_new);
     yb.push_back(yb_new);
@@ -275,8 +280,8 @@ slong padicMul::next() {
         slong pow_prime = 1;
         for (slong i = left; i < right; i++) {
             // compute to N
-            coef_a += this.op1.coef.at(i - 1) * pow_prime;
-            coef_b += this.op2.coef.at(i * k - 1) * pow_prime;
+            coef_a += op1.coef.at(i - 1) * pow_prime;
+            coef_b += op2.coef.at(i * k - 1) * pow_prime;
             pow_prime *= this->prime_base;
         }
 
@@ -284,7 +289,8 @@ slong padicMul::next() {
         if (k == 2) {
             break;
         }
-        coef_a = 0; coef_b = 0;
+        coef_a = 0;
+        coef_b = 0;
         pow_prime = 1;
         for (int i = left; i <= right; i++) {
             coef_a += op1.coef.at(i * k - 1) * pow_prime;
@@ -316,8 +322,8 @@ slong padicMul::next() {
     pow_prime = 1;
     right = pow(2, ln + 1);
 
-    for (slong i = n; i <= n + right; i++){
-        sb += this->coef.at(i)* pow_prime;
+    for (slong i = n; i <= n + right; i++) {
+        sb += this->coef.at(i) * pow_prime;
         pow_prime *= this->prime_base;
     }
     pow_prime = 1;

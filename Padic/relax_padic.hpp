@@ -48,6 +48,8 @@ public:
     padicOperator(slong excess, padicRepresentation &op1, padicRepresentation &op2);
     void compute_to_max();
     void compute_to_N(slong N);
+protected:
+    slong max_prec = 0;
 };
 
 class padicSum : public padicOperator {
