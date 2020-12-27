@@ -63,6 +63,10 @@ long long padicRepresentation::get(long long i) {
     }
 }
 
+void padicRepresentation::increase_val() {
+    val++;
+}
+
 padicOperator::padicOperator(slong excess, padicRepresentation &op1, padicRepresentation &op2) : excess(excess),
                                                                                                  op1(op1), op2(op2) {}
 
@@ -218,4 +222,47 @@ long long mulRemPadic::next() {
     uslong res = (op1.get(prec) * u_scalar) % prime_base;
     coef.push_back(res);
     return res;
+}
+
+mulQuoPadic::mulQuoPadic(padicRepresentation &op1, uslong uScalar) : padicRepresentation(op1),
+                                                                     op1(op1), u_scalar(uScalar) {}
+
+long long mulQuoPadic::next() {
+    uslong res = (op1.get(prec) * u_scalar) / prime_base;
+    coef.push_back(res);
+    return res;
+}
+
+scalarDivPadic::scalarDivPadic(padicRepresentation &op1, slong scalar) : padicRepresentation(op1),
+                                                                         op1(op1) {
+    if (scalar < 0) {
+        scalar = scalar / (slong) prime_base;
+        if (scalar < 0) u_scalar = scalar + prime_base;
+        else u_scalar = 0;
+    } else
+        u_scalar = scalar;
+    scalar_inv = get_invertible(scalar);
+    if (scalar_inv == 0)
+        throw invalid_argument("Scalar should be invertible in Z_p");
+}
+
+long long scalarDivPadic::next() {
+    uslong c;
+    if (coef.empty()) { // if its first iteration ever
+        c = op1.get(1) * scalar_inv % prime_base;
+        coef.push_back(c);
+        return c;
+    } else {
+
+        c = //
+    }
+    return res;
+}
+
+uslong scalarDivPadic::get_invertible(uslong scalar) {
+    for (uslong i = 0; i < prime_base; ++i) {
+        if ((scalar * i) % prime_base == 1)
+            return i;
+    }
+    return 0;
 }
