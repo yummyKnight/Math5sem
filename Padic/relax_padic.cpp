@@ -254,8 +254,8 @@ slong padicMul::next() {
     long ta = 0, tb = 0;
     long n = prec;
     slong l2n = getLn(n * 2), ln = getLn(n), l2n1 = getLn(n * 2 + 1), ln1 = getLn(n + 1);
-    std::vector<slong> ya_new(0, l2n + 1), yb_new(0, l2n + 1);
-    std::vector<slong> ya1_new(0, l2n1 + 1), yb1_new(0, l2n1 + 1);
+    std::vector <slong> ya_new(0, l2n + 1), yb_new(0, l2n + 1);
+    std::vector <slong> ya1_new(0, l2n1 + 1), yb1_new(0, l2n1 + 1);
     ya.push_back(ya_new);
     ya.push_back(ya1_new);
     yb.push_back(yb_new);
@@ -265,54 +265,65 @@ slong padicMul::next() {
     op2.get(n);
     // вычисление алгоритмов
     slong coef_a, coef_b, left, right;
+    slong pow_prime = 1;
     for (slong q = 0; q <= ln; q++) {
         long q_2 = pow(2, q);
         int k = (n + 2) / q_2;
-        ta += ya.at(n).at(q) % prime_base;
-        tb += yb.at(n).at(q) % prime_base;
+        ta += ya.at(n).at(q);
+        tb += yb.at(n).at(q);
         slong coef_a = 0, coef_b = 0, left = q_2, right = q_2 * 2;
-
-        for (slong i = left; i <= right; i++) {
+        slong pow_prime = 1;
+        for (slong i = left; i < right; i++) {
             // compute to N
-            coef_a = this.op1.coef.at(i - 1);
-            coef_b = this.op1.coef.at(i * k - 1);
+            coef_a += this.op1.coef.at(i - 1) * pow_prime;
+            coef_b += this.op2.coef.at(i * k - 1) * pow_prime;
+            pow_prime *= this->prime_base;
         }
 
         ta += coef_a * coef_b;
         if (k == 2) {
             break;
         }
-        coef_a = 0;
-        coef_b = 0;
-        left = q_2;
-        right = q_2 * 2;
+        coef_a = 0; coef_b = 0;
+        pow_prime = 1;
         for (int i = left; i <= right; i++) {
-            coef_a = op1.coef.at(i * k - 1);
-            coef_b = op1.coef.at(i - 1);
+            coef_a += op1.coef.at(i * k - 1) * pow_prime;
+            coef_b += op2.coef.at(i - 1) * pow_prime;
+            pow_prime *= this->prime_base;
         }
         tb += coef_a * coef_b;
 
     }
     right = pow(2, ln + 1);
     slong sa = ta;
-    slong pow_prime = 1;
 
-    for (slong i = n; i <= n + right; i++)
-//        sa += this->coef.at(i) % ;
-        for (slong i = 0; i < right; i++) {
-            this->coef.at(n + i) = sa / pow_prime % this->prime_base;
-
-        }
+    pow_prime = 1;
+    if (this->coef.size() < n + right)
+        this->coef.resize(n + right, 0);
+    for (slong i = n; i <= n + right; i++) {
+        sa += this->coef.at(i) * pow_prime;
+        pow_prime *= this->prime_base;
+    }
+    pow_prime = 1;
+    for (slong i = 0; i < right; i++) {
+        this->coef.at(n + i) = sa / pow_prime % this->prime_base;
+        pow_prime *= this->prime_base;
+    }
     if (n + 2 != right)
         ya.at(n + right).at(ln) = sa;
 
     slong sb = tb;
     pow_prime = 1;
     right = pow(2, ln + 1);
-    for (slong i = n; i <= n + right; i++)
-        sb += this->coef.at(i);
+
+    for (slong i = n; i <= n + right; i++){
+        sb += this->coef.at(i)* pow_prime;
+        pow_prime *= this->prime_base;
+    }
+    pow_prime = 1;
     for (slong i = 0; i < right; i++) {
         this->coef.at(n + i) = sa / pow_prime % this->prime_base;
+        pow_prime *= this->prime_base;
     }
     if (n + 2 != right)
         yb.at(n + right).at(ln) = sb;

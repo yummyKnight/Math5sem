@@ -15,12 +15,17 @@ int main() {
 //    padicSub tmp_sum = padicSub(test2_1, test2_2);
 //    tmp_sum.compute_to_max();
 //    cout << tmp_sum << endl;
-    padicNumber test2_1 = padicNumber(1000000478781 ,5);
-    padicNumber test2_2 = padicNumber(100000478781, 5);
-    padicSub tmp_sum = padicSub(test2_1, test2_2);
+//    padicNumber test2_1 = padicNumber(1000000478781 ,5);
+//    padicNumber test2_2 = padicNumber(100000478781, 5);
+//    padicSub tmp_sum = padicSub(test2_1, test2_2);
     // 3*5^0 + 1*5^1 + 3*5^2 + 2*5^3 + 1*5^4
+    padicNumber test2_1 = padicNumber(5 ,7);
+    padicNumber test2_2 = padicNumber(13, 7);
+    padicMul tmp_sum = padicMul(test2_1, test2_2);
     tmp_sum.compute_to_max();
-    cout << tmp_sum.to10base() << endl;
-    cout << tmp_sum << endl;
-    cout << -6 / (slong)(uslong)5 << endl;
+    //cout << tmp_sum.coef << endl;
+    for (const auto& obj : tmp_sum.coef)
+        std::cout << ' ' << obj;
+    //cout << tmp_sum << endl;
+    //cout << -6 / (slong)(uslong)5 << endl;
 }
