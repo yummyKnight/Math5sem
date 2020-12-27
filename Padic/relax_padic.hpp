@@ -69,7 +69,7 @@ private:
     std::vector<std::vector<long long>> ya;
     std::vector<std::vector<long long>> yb;
 public:
-    slong next(long long j) override;
+    slong next() override;
     padicMul(padicRepresentation &op1, padicRepresentation &op2);
     slong computeMul();
 };
