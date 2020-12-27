@@ -76,9 +76,9 @@ void padicOperator::compute_to_N(long long int N) {
     }
 }
 
-void padicOperator::compute_to_max() {
-    slong max_N = max(op1.prec, op2.prec) + 1; // +1 to overflow
-    compute_to_N(max_N);
+void padicOperator::compute_to_max() {// +1 to overflow
+    assert(max_prec > 0);
+    compute_to_N(max_prec);
 }
 
 bool is_prime(slong n) {
@@ -159,6 +159,7 @@ padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) : padicOp
     this->val = min(op1.val, op2.val);
     this->prec = val;
     this->prime_base = op2.prime_base;
+    max_prec = max(op1.prec, op2.prec) + 1; // 1 for overflow
 }
 
 slong padicSum::next() {
@@ -187,6 +188,7 @@ padicSub::padicSub(padicRepresentation &op1, padicRepresentation &op2) : padicOp
     this->val = min(op1.val, op2.val);
     this->prec = val;
     this->prime_base = op2.prime_base;
+    max_prec = max(op1.prec, op2.prec);
 }
 
 slong padicSub::next() {

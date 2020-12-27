@@ -12,6 +12,8 @@
 typedef unsigned long long uslong;
 typedef long long int slong;
 
+long getLn(long long l);
+
 class padicRepresentation {
 public:
     long long get(long long i);
@@ -54,6 +56,8 @@ public:
     void compute_to_max();
 
     void compute_to_N(slong N);
+protected:
+    slong max_prec = 0;
 };
 
 class padicSum : public padicOperator {
