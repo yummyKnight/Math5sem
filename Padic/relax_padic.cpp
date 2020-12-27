@@ -248,71 +248,74 @@ long getLn(long n) {
 }
 
 slong padicMul::next() {
-    if (j - this->prec > 1)
-        throw invalid_argument("Padic number next should get i - this->prec >= 1");
 
     // начало алгоритма умножения
     // дополнения векторов ya и yb
-    long ta = 0, tb = 0
-    long n = j;
-    long l2n = getLn(n * 2), ln = getLn(n), l2n1 = getLn(n * 2 + 1), ln1 = getLn(n + 1);
-    std::vector<long, long> ya_new(0, l2n + 1), yb_new(0, l2n + 1);
-    std::vector<long, long> ya1_new(0, l2n1 + 1), yb1_new(0, l2n1 + 1);
+    long ta = 0, tb = 0;
+    long n = prec;
+    slong l2n = getLn(n * 2), ln = getLn(n), l2n1 = getLn(n * 2 + 1), ln1 = getLn(n + 1);
+    std::vector<slong> ya_new(0, l2n + 1), yb_new(0, l2n + 1);
+    std::vector<slong> ya1_new(0, l2n1 + 1), yb1_new(0, l2n1 + 1);
     ya.push_back(ya_new);
     ya.push_back(ya1_new);
     yb.push_back(yb_new);
     yb.push_back(yb1_new);
-    long ta = 0, tb = 0;
 
+    op1.get(n);
+    op2.get(n);
     // вычисление алгоритмов
-
-    for (int q = 0; q <= ln; q++)
+    slong coef_a, coef_b, left, right;
+    for (slong q = 0; q <= ln; q++) {
         long q_2 = pow(2, q);
-    int k = (n + 2) / q_2;
-    ta += ya.at(n).at(q) % this->prime_base;
-    tb += yb.at(n).at(q) % this->prime_base;
+        int k = (n + 2) / q_2;
+        ta += ya.at(n).at(q) % prime_base;
+        tb += yb.at(n).at(q) % prime_base;
+        slong coef_a = 0, coef_b = 0, left = q_2, right = q_2 * 2;
 
-    long coef_a = 0, coef_b = 0, left = q_2, right = q_2 * 2;
-    for (long i = left; i <= right; i++) {
-        coef_a = this.op1.coef.at(i - 1);
-        coef_b = this.op1.coef.at(i * k - 1);
-    }
-    ta += coef_a * coef_b
-    if (k == 2) {
-        break;
-    }
-    coef_a = 0;
-    coef_b = 0;
-    left = q_2;
-    right = q_2 * 2;
-    for (int i = left; i <= right; i++) {
-        coef_a = this.op1.coef.at(i * k - 1)
-        coef_b = this.op1.coef.at(i - 1)
-    }
+        for (slong i = left; i <= right; i++) {
+            // compute to N
+            coef_a = this.op1.coef.at(i - 1);
+            coef_b = this.op1.coef.at(i * k - 1);
+        }
 
-    long sa = ta;
-    right = pow(2, ln + 1)
-    long pow_prime = 1;
-
-    for (int i = n; i <= n + right; i++)
-        sa += this->coef.at(i) %;
-    for (int i = 0; i < right; i++) {
-        this->coef.at(n + i) = sa / pow_prime % this->prime_base;
+        ta += coef_a * coef_b;
+        if (k == 2) {
+            break;
+        }
+        coef_a = 0;
+        coef_b = 0;
+        left = q_2;
+        right = q_2 * 2;
+        for (int i = left; i <= right; i++) {
+            coef_a = op1.coef.at(i * k - 1);
+            coef_b = op1.coef.at(i - 1);
+        }
+        tb += coef_a * coef_b;
 
     }
-    if n + 2 != right
-    ya.at(n + right).at(ln) = sa;
+    right = pow(2, ln + 1);
+    slong sa = ta;
+    slong pow_prime = 1;
 
-    long sb = tb;
-    long pow_prime = 1;
-    right = pow(2, ln + 1)
-    for (int i = n; i <= n + right; i++)
+    for (slong i = n; i <= n + right; i++)
+//        sa += this->coef.at(i) % ;
+        for (slong i = 0; i < right; i++) {
+            this->coef.at(n + i) = sa / pow_prime % this->prime_base;
+
+        }
+    if (n + 2 != right)
+        ya.at(n + right).at(ln) = sa;
+
+    slong sb = tb;
+    pow_prime = 1;
+    right = pow(2, ln + 1);
+    for (slong i = n; i <= n + right; i++)
         sb += this->coef.at(i);
-    for (int i = 0; i < right; i++) {
+    for (slong i = 0; i < right; i++) {
         this->coef.at(n + i) = sa / pow_prime % this->prime_base;
     }
-    if n + 2 != right
-    yb.at(n + right).at(ln) = sb;
+    if (n + 2 != right)
+        yb.at(n + right).at(ln) = sb;
 
     return this->coef.at(n);
 }
