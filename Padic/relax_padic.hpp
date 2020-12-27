@@ -14,33 +14,27 @@ typedef long long int slong;
 
 class padicRepresentation {
 public:
-    virtual long long next(long long i) = 0;
-
+    long long get(long long i);
     slong prec; // long long because arithmetic operations leads to overflow
     std::vector<long long> coef;
     slong val;
     uslong prime_base;
-
     friend std::ostream &operator<<(std::ostream &os, const padicRepresentation &number);
-
     padicRepresentation() {};
-
     slong to10base();
-
 private:
+    virtual long long next() = 0;
 };
 
 class padicNumber : public padicRepresentation {
 public:
     padicNumber(slong base10, uslong prime_base, uslong init_prec = 20);
 
-    slong next(long long i) override;
+    slong next() override;
 
 private:
     bool is_negative;
     slong Ox;
-
-    slong computeOX();
 
 };
 
@@ -57,17 +51,15 @@ public:
 class padicSum : public padicOperator {
 private:
 public:
-    slong next(long long i) override;
+    slong next() override;
     padicSum(padicRepresentation &op1, padicRepresentation &op2);
-    slong computeSum();
 };
 
 class padicSub : public padicOperator {
 private:
 public:
-    slong next(long long i) override;
+    slong next() override;
     padicSub(padicRepresentation &op1, padicRepresentation &op2);
-    slong computeSub();
 };
 
 #endif //GINAC_RELAX_PADIC_HPP
