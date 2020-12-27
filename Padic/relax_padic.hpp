@@ -25,6 +25,8 @@ public:
 
     padicRepresentation() {};
 
+    padicRepresentation(slong prec, const std::vector<long long int> &coef, slong val, uslong primeBase);
+
     slong to10base();
 
 private:
@@ -69,5 +71,16 @@ public:
     padicSub(padicRepresentation &op1, padicRepresentation &op2);
     slong computeSub();
 };
+
+class mulRemPadic : public padicRepresentation{
+    padicRepresentation &op1;
+    uslong u_scalar;
+public:
+    mulRemPadic(padicRepresentation &op1, uslong uScalar);
+    long long next(long long i) override;
+
+    slong computeNext();
+};
+
 
 #endif //GINAC_RELAX_PADIC_HPP
