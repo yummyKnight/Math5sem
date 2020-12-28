@@ -12,6 +12,8 @@
 typedef unsigned long long uslong;
 typedef long long int slong;
 
+slong getLn(long long l);
+
 class padicRepresentation {
 public:
     long long get(long long i);
@@ -46,6 +48,8 @@ public:
     padicOperator(slong excess, padicRepresentation &op1, padicRepresentation &op2);
     void compute_to_max();
     void compute_to_N(slong N);
+protected:
+    slong max_prec = 0;
 };
 
 class padicSum : public padicOperator {
@@ -61,5 +65,16 @@ public:
     slong next() override;
     padicSub(padicRepresentation &op1, padicRepresentation &op2);
 };
+
+class padicMul : public padicOperator {
+private:
+    std::vector<std::vector<long long>> ya;
+    std::vector<std::vector<long long>> yb;
+public:
+    slong next() override;
+    padicMul(padicRepresentation &op1, padicRepresentation &op2);
+    slong computeMul();
+};
+
 
 #endif //GINAC_RELAX_PADIC_HPP
