@@ -21,6 +21,7 @@ public:
     std::vector<long long> coef;
     slong val;
     uslong prime_base;
+    bool is_negative;
     friend std::ostream &operator<<(std::ostream &os, const padicRepresentation &number);
     padicRepresentation() {};
     slong to10base();
