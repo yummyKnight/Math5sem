@@ -260,6 +260,8 @@ uslong scalarDivPadic::converToRing(slong scalar) {
         else res = 0;
     } else if (scalar >= prime_base)
         res = scalar % prime_base;
+    else
+        res = scalar;
     return res;
 }
 
@@ -272,8 +274,8 @@ long long scalarDivPadic::next() {
         return c;
     } else {
         slong mul_quo = (coef.back() * u_scalar) / prime_base;
-        slong s_prime = prime_base;
-        slong part = op1.get(prec) - s_prime * mul_quo;
+//        slong s_prime = prime_base;
+        slong part = op1.get(prec) - mul_quo;
         uslong u_part = converToRing(part);
         c = (u_part * scalar_inv) % prime_base; // mul_rem
         if (c == 0 && prec - 1 - val == 0)
