@@ -7,8 +7,8 @@
 #include <vector>
 #include <stdexcept>
 #include <string>
-#include <cassert>
 #include <cmath>
+#include <cassert>
 
 using namespace std;
 
@@ -76,7 +76,7 @@ void padicOperator::compute_to_N(long long int N) {
     }
 }
 
-void padicOperator::compute_to_max() {// +1 to overflow
+void padicOperator::compute_to_max() { // +1 to overflow
     assert(max_prec > 0);
     compute_to_N(max_prec);
 }
@@ -217,48 +217,71 @@ slong padicSub::next() {
         else u_scalar = 0;
     }
 */
-mulRemPadic::mulRemPadic(padicRepresentation &op1, uslong uScalar) : padicRepresentation(op1),
-                                                                     op1(op1), u_scalar(uScalar) {}
+mulRemPadic::mulRemPadic(padicRepresentation &op1, uslong uScalar) : op1(op1), u_scalar(uScalar) {}
 
-long long mulRemPadic::next() {
-    uslong res = (op1.get(prec) * u_scalar) % prime_base;
-    coef.push_back(res);
-    return res;
+slong mulRemPadic::do_job(uslong prec) {
+    return (op1.get(prec) * u_scalar) % op1.prime_base;
 }
 
-mulQuoPadic::mulQuoPadic(padicRepresentation &op1, uslong uScalar) : padicRepresentation(op1),
-                                                                     op1(op1), u_scalar(uScalar) {}
+mulQuoPadic::mulQuoPadic(padicRepresentation &op1, uslong uScalar) : op1(op1), u_scalar(uScalar) {}
 
-long long mulQuoPadic::next() {
-    uslong res = (op1.get(prec) * u_scalar) / prime_base;
-    coef.push_back(res);
-    return res;
+slong mulQuoPadic::do_job() {
+    return (op1.coef.back() * u_scalar) / op1.prime_base;
 }
 
-scalarDivPadic::scalarDivPadic(padicRepresentation &op1, slong scalar) : padicRepresentation(op1),
-                                                                         op1(op1) {
+scalarDivPadic::scalarDivPadic(padicRepresentation &op1, slong scalar) : op1(op1) {
+    prec = op1.val;
+    val = op1.val;
+    prime_base = op1.prime_base;
+    coef = vector<slong>();
     if (scalar < 0) {
         scalar = scalar / (slong) prime_base;
         if (scalar < 0) u_scalar = scalar + prime_base;
         else u_scalar = 0;
-    } else
-        u_scalar = scalar;
+    } else if (scalar >= prime_base)
+        u_scalar = scalar % prime_base;
+    else u_scalar = scalar;
+
     scalar_inv = get_invertible(scalar);
     if (scalar_inv == 0)
         throw invalid_argument("Scalar should be invertible in Z_p");
+
+
+//  push 0 element (precision still == prec from op1)
+
+
 }
+
+uslong scalarDivPadic::converToRing(slong scalar) {
+    uslong res;
+    if (scalar < 0) {
+        scalar = scalar / (slong) prime_base;
+        if (scalar < 0) res = scalar + prime_base;
+        else res = 0;
+    } else if (scalar >= prime_base)
+        res = scalar % prime_base;
+    return res;
+}
+
 
 long long scalarDivPadic::next() {
     uslong c;
-    if (coef.empty()) { // if its first iteration ever
-        c = op1.get(1) * scalar_inv % prime_base;
+    if (coef.empty()) { // if 1st time
+        c = (op1.get(prec) * scalar_inv) % prime_base;
         coef.push_back(c);
         return c;
     } else {
-
-        c = //
+        slong mul_quo = (coef.back() * u_scalar) / prime_base;
+        slong s_prime = prime_base;
+        slong part = op1.get(prec) - s_prime * mul_quo;
+        uslong u_part = converToRing(part);
+        c = (u_part * scalar_inv) % prime_base; // mul_rem
+        if (c == 0 && prec - 1 - val == 0)
+            val++;
+        else
+            coef.push_back(c);
+        return c;
     }
-    return res;
 }
 
 uslong scalarDivPadic::get_invertible(uslong scalar) {
@@ -267,4 +290,10 @@ uslong scalarDivPadic::get_invertible(uslong scalar) {
             return i;
     }
     return 0;
+}
+
+void scalarDivPadic::compute_to_max() {
+    for (slong i = 1; i < op1.prec + 1; ++i) {
+        get(i);
+    }
 }

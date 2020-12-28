@@ -26,7 +26,9 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const padicRepresentation &number);
 
     padicRepresentation() {};
+
     void increase_val();
+
     slong to10base();
 
 private:
@@ -56,6 +58,7 @@ public:
     void compute_to_max();
 
     void compute_to_N(slong N);
+
 protected:
     slong max_prec = 0;
 };
@@ -76,25 +79,26 @@ public:
     padicSub(padicRepresentation &op1, padicRepresentation &op2);
 };
 
-class mulRemPadic : public padicRepresentation {
-
+class mulRemPadic {
 public:
     mulRemPadic(padicRepresentation &op1, uslong uScalar);
 
     padicRepresentation &op1;
     uslong u_scalar;
-private:
-    long long next() override;
+
+    slong do_job(uslong prec);
 };
 
-class mulQuoPadic : public padicRepresentation {
+class mulQuoPadic {
 public:
     mulQuoPadic(padicRepresentation &op1, uslong uScalar);
 
     padicRepresentation &op1;
     uslong u_scalar;
-private:
-    long long next() override;
+
+    slong do_job();
+
+
 };
 
 class scalarDivPadic : public padicRepresentation {
@@ -104,10 +108,17 @@ public:
 
     padicRepresentation &op1;
     uslong u_scalar;
+
+    void compute_to_max();
+
 private:
     uslong scalar_inv;
+
     uslong get_invertible(uslong scalar);
+
     long long next() override;
+
+    uslong converToRing(slong scalar);
 };
 
 #endif //GINAC_RELAX_PADIC_HPP
