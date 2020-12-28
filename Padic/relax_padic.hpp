@@ -36,9 +36,7 @@ public:
     slong next() override;
 
 private:
-    bool is_negative;
     slong Ox;
-
 };
 
 class padicOperator : public padicRepresentation {

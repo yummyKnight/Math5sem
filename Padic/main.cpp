@@ -33,8 +33,8 @@ int main() {
 //    padicNumber test2_2 = padicNumber(49, 7);
 //    padicNumber test2_3 = padicNumber(343, 7);
 
-    padicNumber test2_1 = padicNumber(100500 ,7);
-    padicNumber test2_2 = padicNumber(4924500, 7);
+    padicNumber test2_1 = padicNumber(-100500 ,7);
+    padicNumber test2_2 = padicNumber(492400, 7);
     padicNumber test2_3 = padicNumber(494912250000, 7);
 
     cout << test2_1 << endl;
@@ -42,10 +42,11 @@ int main() {
     cout << test2_3 << endl;
 
     //padicMul tmp_sub = padicMul(test2_1, test2_2);
-    padicSub tmp_sub = padicSub(test2_1, test2_2);
+    //padicSub tmp_sub = padicSub(test2_1, test2_2);
+    padicSum tmp_sum = padicSum(test2_1, test2_2);
     //tmp_sub.compute_to_max();
     //cout <<"result\n "<< tmp_su << endl;
-    cout <<"result\n "<< tmp_sub.is_negative << endl;
+    cout <<"result\n "<< tmp_sum.is_negative <<"   "<< test2_2.is_negative << endl;
     cout << endl;
 
 //    for (const auto& obj : test2_1.coef)

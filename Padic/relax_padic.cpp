@@ -157,16 +157,29 @@ padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) : padicOp
     this->prime_base = op2.prime_base;
     max_prec = max(op1.prec, op2.prec) + 1; // 1 for overflow
     is_negative = false;
-//    if(op1.is_negative && op2.is_negative)
-//        is_negative = true;
-//    else if (op1.is_negative || op2.is_negative) {
-//        for (int i = max_prec-1; i > 0; i--) {
-//            if (op2.get(i) != op1.get(i) && is_negative) {
-//                is_negative = true;
-//                break;
-//            }
-//        }
-//    }
+    if(op1.is_negative && op2.is_negative)
+        is_negative = true;
+    else if (op1.is_negative || op2.is_negative) {
+        if(op2.prec> op1.prec && op2.is_negative || op2.prec < op1.prec && op1.is_negative)
+            is_negative = true;
+        else {
+            if(op2.is_negative ) {
+                this->op1 = op2;
+                this->op2 = op1;
+            }
+            for (int i = max_prec - 1; i > 0; i--) {
+                if (max(op1.val, op2.val) > i) {
+                    if (op1.val > op2.val && op2.is_negative)
+                        is_negative = true;
+                    break;
+                }
+                if (op2.get(i) != op1.get(i) && is_negative) {
+                    is_negative = true;
+                    break;
+                }
+            }
+        }
+    }
 }
 
 slong padicSum::next() {
@@ -197,19 +210,23 @@ padicSub::padicSub(padicRepresentation &op1, padicRepresentation &op2) : padicOp
     this->prime_base = op2.prime_base;
     max_prec = max(op1.prec, op2.prec);
     is_negative = false;
-    cout << "negative  "<<op1.is_negative <<"  "<< op2.is_negative << endl;
+    cout << "negative  "<< is_negative<< " " <<op1.is_negative <<"  "<< op2.is_negative << endl;
     if(op1.is_negative && !op2.is_negative)
         is_negative = true;
     else if(op1.is_negative == op2.is_negative){
-
-//        if(op1.is_negative && op2.is_negative) {
-//            this->op1 = op2;
-//            this->op2 = op1;
-//        }
+        if(op1.is_negative && op2.is_negative) {
+            this->op1 = op2;
+            this->op2 = op1;
+        }
         if(op2.prec> op1.prec)
             is_negative = true;
         else
             for (int i = max_prec; i > 0; i--) {
+                if(max(op1.val, op2.val) >i){
+                    if (op1.val > op2.val )
+                        is_negative = true;
+                    break;
+                }
                 if (op2.get(i) > op1.get(i)) {
                     is_negative = true;
                     break;
@@ -245,7 +262,7 @@ padicMul::padicMul(padicRepresentation &op1, padicRepresentation &op2) : padicOp
 //  because start from 0
     // TODO: val == 0 ONLY for tests
     this->val = 0;
-    this->is_negative = op1.is_negative^op1.is_negative;
+    this->is_negative = op1.is_negative^op2.is_negative;
     // TODO: prec = val
     this->prec = 0;
     this->prime_base = op2.prime_base;
