@@ -42,6 +42,20 @@ uslong get_invertible(uslong scalar, uslong prime_base) {
     return 0;
 }
 
+uslong converToRing(slong scalar, uslong prime_base) {
+    uslong res;
+    if (scalar < 0) {
+        slong base = prime_base;
+        scalar = scalar % base;
+        if (scalar < 0) res = scalar + prime_base;
+        else res = 0;
+    } else if (scalar >= prime_base)
+        res = scalar % prime_base;
+    else
+        res = scalar;
+    return res;
+}
+
 slong padicRepresentation::to10base() {
     slong base10 = 0;
 //    if negative
@@ -260,20 +274,6 @@ scalarDivPadic::scalarDivPadic(padicRepresentation &op1, slong scalar) : op1(op1
 
 }
 
-uslong scalarDivPadic::converToRing(slong scalar) {
-    uslong res;
-    if (scalar < 0) {
-        slong base = prime_base;
-        scalar = scalar % base;
-        if (scalar < 0) res = scalar + prime_base;
-        else res = 0;
-    } else if (scalar >= prime_base)
-        res = scalar % prime_base;
-    else
-        res = scalar;
-    return res;
-}
-
 
 long long scalarDivPadic::next() {
     uslong c;
@@ -284,7 +284,7 @@ long long scalarDivPadic::next() {
     } else {
         slong mul_quo = (coef.back() * u_scalar) / prime_base;
         slong part = op1.get(prec) - mul_quo;
-        uslong u_part = converToRing(part);
+        uslong u_part = converToRing(part, prime_base);
         c = (u_part * scalar_inv) % prime_base; // mul_rem
         if (c == 0 && prec - 1 - val == 0)
             val++;
@@ -314,7 +314,11 @@ long long int divPadic::next() {
         coef.push_back(c);
         return c;
     } else {
-        c = (op1.get(prec) - (op2.get(prec) - b0) * coef.back()) / b0;
+        slong part_a = op1.get(prec);
+        slong part_b = op2.get(prec) - b0;
+        slong part_c = part_b * coef.back();
+        slong part_d = converToRing(part_a - part_c, prime_base);
+        c = part_d / b0;
         coef.push_back(c);
         return c;
     }

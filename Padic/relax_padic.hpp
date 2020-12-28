@@ -118,7 +118,6 @@ private:
 
     long long next() override;
 
-    uslong converToRing(slong scalar);
 
 };
 
