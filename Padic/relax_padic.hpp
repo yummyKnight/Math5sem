@@ -111,14 +111,25 @@ public:
 
     void compute_to_max();
 
+    void compute_to_N(slong N);
+
 private:
     uslong scalar_inv;
-
-    uslong get_invertible(uslong scalar);
 
     long long next() override;
 
     uslong converToRing(slong scalar);
+
+};
+
+class divPadic : public padicOperator {
+public:
+    divPadic(padicRepresentation &op1, padicRepresentation &op2);
+private:
+    long long int next() override;
+    slong u;
+    slong b0;
+
 };
 
 #endif //GINAC_RELAX_PADIC_HPP

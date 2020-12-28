@@ -34,6 +34,14 @@ ostream &operator<<(ostream &os, const padicRepresentation &number) {
     return os;
 }
 
+uslong get_invertible(uslong scalar, uslong prime_base) {
+    for (uslong i = 0; i < prime_base; ++i) {
+        if ((scalar * i) % prime_base == 1)
+            return i;
+    }
+    return 0;
+}
+
 slong padicRepresentation::to10base() {
     slong base10 = 0;
 //    if negative
@@ -242,7 +250,7 @@ scalarDivPadic::scalarDivPadic(padicRepresentation &op1, slong scalar) : op1(op1
         u_scalar = scalar % prime_base;
     else u_scalar = scalar;
 
-    scalar_inv = get_invertible(scalar);
+    scalar_inv = get_invertible(scalar, prime_base);
     if (scalar_inv == 0)
         throw invalid_argument("Scalar should be invertible in Z_p");
 
@@ -255,7 +263,8 @@ scalarDivPadic::scalarDivPadic(padicRepresentation &op1, slong scalar) : op1(op1
 uslong scalarDivPadic::converToRing(slong scalar) {
     uslong res;
     if (scalar < 0) {
-        scalar = scalar / (slong) prime_base;
+        slong base = prime_base;
+        scalar = scalar % base;
         if (scalar < 0) res = scalar + prime_base;
         else res = 0;
     } else if (scalar >= prime_base)
@@ -274,7 +283,6 @@ long long scalarDivPadic::next() {
         return c;
     } else {
         slong mul_quo = (coef.back() * u_scalar) / prime_base;
-//        slong s_prime = prime_base;
         slong part = op1.get(prec) - mul_quo;
         uslong u_part = converToRing(part);
         c = (u_part * scalar_inv) % prime_base; // mul_rem
@@ -286,16 +294,43 @@ long long scalarDivPadic::next() {
     }
 }
 
-uslong scalarDivPadic::get_invertible(uslong scalar) {
-    for (uslong i = 0; i < prime_base; ++i) {
-        if ((scalar * i) % prime_base == 1)
-            return i;
-    }
-    return 0;
-}
-
 void scalarDivPadic::compute_to_max() {
     for (slong i = 1; i < op1.prec + 1; ++i) {
         get(i);
     }
+}
+
+void scalarDivPadic::compute_to_N(slong N) {
+    for (slong i = 1; i < N; ++i) {
+        get(i);
+    }
+}
+
+long long int divPadic::next() {
+    uslong c;
+    uslong scalar_inv;
+    if (coef.empty()) {
+        c = u * op1.get(op1.val + 1) % prime_base;
+        coef.push_back(c);
+        return c;
+    } else {
+        c = (op1.get(prec) - (op2.get(prec) - b0) * coef.back()) / b0;
+        coef.push_back(c);
+        return c;
+    }
+}
+
+divPadic::divPadic(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(0, op1, op2) {
+
+    if (op1.prime_base != op2.prime_base)
+        throw invalid_argument("Bases in div should be identical");
+//  because start from 0
+    this->val = max(op1.val, op2.val);
+    this->prec = val;
+    this->prime_base = op2.prime_base;
+    max_prec = max(op1.prec, op2.prec);
+    b0 = op2.get(val + 1);
+    u = get_invertible(get_invertible(b0, prime_base), prime_base);
+    if (u == 0)
+        throw invalid_argument("Scalar should be invertible in Z_p");
 }

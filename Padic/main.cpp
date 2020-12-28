@@ -26,10 +26,13 @@ int main() {
 //    //cout << tmp_sum.coef << endl;
 //    for (const auto& obj : tmp_sum.coef)
 //        std::cout << ' ' << obj;
-    padicNumber test2_inv = padicNumber(80, 5);
-    cout << test2_inv << endl;
-    scalarDivPadic pad = scalarDivPadic(test2_inv, 2);
+    padicNumber test2_div = padicNumber(100, 2);
+    padicNumber test1_div = padicNumber(10, 2);
+    cout << test2_div << endl;
+    cout << test1_div << endl;
+    divPadic pad = divPadic(test2_div, test1_div);
     pad.compute_to_max();
+    cout << pad << endl;
     cout << pad.to10base() << endl;
 
     //cout << tmp_sum << endl;
