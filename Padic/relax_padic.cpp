@@ -89,8 +89,7 @@ void padicRepresentation::increase_val() {
     val++;
 }
 
-padicOperator::padicOperator(slong excess, padicRepresentation &op1, padicRepresentation &op2) : excess(excess),
-                                                                                                 op1(op1), op2(op2) {}
+padicOperator::padicOperator(padicRepresentation &op1, padicRepresentation &op2) : op1(op1), op2(op2) {}
 
 void padicOperator::compute_to_N(long long int N) {
     for (long long int i = 1; i < N + 1; ++i) {
@@ -174,7 +173,7 @@ slong padicNumber::next() {
     return coef.back();
 }
 
-padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(0, op1, op2) {
+padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(op1, op2) {
     if (op1.prime_base != op2.prime_base)
         throw invalid_argument("Bases in sum should be identical");
 //  because start from 0
@@ -203,7 +202,7 @@ slong padicSum::next() {
     }
 }
 
-padicSub::padicSub(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(0, op1, op2) {
+padicSub::padicSub(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(op1, op2) {
     if (op1.prime_base != op2.prime_base)
         throw invalid_argument("Bases in sum should be identical");
 //  because start from 0
@@ -324,7 +323,7 @@ long long int divPadic::next() {
     }
 }
 
-divPadic::divPadic(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(0, op1, op2) {
+divPadic::divPadic(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(op1, op2) {
 
     if (op1.prime_base != op2.prime_base)
         throw invalid_argument("Bases in div should be identical");
@@ -337,4 +336,35 @@ divPadic::divPadic(padicRepresentation &op1, padicRepresentation &op2) : padicOp
     u = get_invertible(get_invertible(b0, prime_base), prime_base);
     if (u == 0)
         throw invalid_argument("Scalar should be invertible in Z_p");
+}
+
+classicMulPadic::classicMulPadic(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(op1, op2) {
+    val = op1.val + op2.val;
+    prec = val;
+    prime_base = op1.prime_base;
+    excess.resize(prec, 0);
+    /// op1.prec + op2.prec - 1 (+ 1 for excess)
+    max_prec = op1.prec + op2.prec;
+    /// implement negative
+}
+
+long long int classicMulPadic::next() {
+    slong s;
+    slong n = prec + 1;
+    slong t = 0;
+    excess.push_back(0);
+    for (slong i = 1; i < n; ++i) {
+        /// i - 1 because i is prec, not index
+        s = op1.get(i) * op2.get(n - i) + excess.at(i - 1);
+        t += s;
+        /// i - 1 because i is prec, not index
+        excess.at(i - 1) = t / prime_base;
+        t = t % prime_base;
+    }
+    if (t == 0 && prec - 1 - val == 0)
+        val++;
+    else
+        coef.push_back(t);
+    // remove leading 0
+    return t;
 }

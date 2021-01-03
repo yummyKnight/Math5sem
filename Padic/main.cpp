@@ -26,11 +26,11 @@ int main() {
 //    //cout << tmp_sum.coef << endl;
 //    for (const auto& obj : tmp_sum.coef)
 //        std::cout << ' ' << obj;
-    padicNumber test2_div = padicNumber(100, 3);
-    padicNumber test1_div = padicNumber(10, 3);
+    padicNumber test2_div = padicNumber(12247, 3);
+    padicNumber test1_div = padicNumber(794000000, 3);
     cout << test2_div << endl;
     cout << test1_div << endl;
-    divPadic pad = divPadic(test2_div, test1_div);
+    classicMulPadic pad = classicMulPadic(test2_div, test1_div);
     pad.compute_to_max();
     cout << pad << endl;
     cout << pad.to10base() << endl;

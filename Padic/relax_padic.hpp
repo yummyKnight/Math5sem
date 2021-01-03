@@ -53,11 +53,14 @@ public:
     padicRepresentation &op1;
     padicRepresentation &op2;
 
-    padicOperator(slong excess, padicRepresentation &op1, padicRepresentation &op2);
+    padicOperator(padicRepresentation &op1, padicRepresentation &op2);
 
     void compute_to_max();
 
     void compute_to_N(slong N);
+
+//private:
+//    long long int next() override;
 
 protected:
     slong max_prec = 0;
@@ -130,5 +133,12 @@ private:
     slong b0;
 
 };
+class classicMulPadic : public padicOperator {
+public:
+    classicMulPadic(padicRepresentation &op1, padicRepresentation &op2);
 
+private:
+    long long int next() override;
+    std::vector<slong > excess;
+};
 #endif //GINAC_RELAX_PADIC_HPP
