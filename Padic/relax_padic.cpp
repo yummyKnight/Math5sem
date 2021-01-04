@@ -111,24 +111,29 @@ padicNumber::padicNumber(long long base10, uslong prime_base, uslong init_prec) 
         d = reduce(x, prime_base);
     }
 
-    if (is_negative) {
-        coef.push_back(prime_base - d);
-    } else {
+//    if (is_negative) {
+//        coef.push_back(prime_base - d);
+//    } else {
+//        coef.push_back(d);
+//    }
+//
+//    if (is_negative) {
+//        for (j = 0; j < init_prec - val; j++) {
+//            d = reduce(x, prime_base);
+//            coef.push_back(prime_base - d - 1);
+//        }
+//    } else {
+//        for (j = 0; x != 0 && j < init_prec - val; j++) {
+//            d = reduce(x, prime_base);
+//            coef.push_back(d);
+//        }
+//    }
+
+    coef.push_back(d);
+    for (j = 0; x != 0 && j < init_prec - val; j++) {
+        d = reduce(x, prime_base);
         coef.push_back(d);
     }
-
-    if (is_negative) {
-        for (j = 0; j < init_prec - val; j++) {
-            d = reduce(x, prime_base);
-            coef.push_back(prime_base - d - 1);
-        }
-    } else {
-        for (j = 0; x != 0 && j < init_prec - val; j++) {
-            d = reduce(x, prime_base);
-            coef.push_back(d);
-        }
-    }
-
     // prec тот макимум в масиве который уже посчитан
     this->prec = coef.size() + val;
     this->Ox = x;
@@ -140,11 +145,12 @@ padicNumber::padicNumber(long long base10, uslong prime_base, uslong init_prec) 
 slong padicNumber::next() {
     slong d;
     d = reduce(this->Ox, prime_base);
-    if (is_negative) {
-        coef.push_back(prime_base - d - 1);
-    } else {
-        coef.push_back(d);
-    }
+//    if (is_negative) {
+//        coef.push_back(prime_base - d - 1);
+//    } else {
+//        coef.push_back(d);
+//    }
+    coef.push_back(d);
     return coef.back();
 }
 
@@ -160,21 +166,27 @@ padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) : padicOp
     if(op1.is_negative && op2.is_negative)
         is_negative = true;
     else if (op1.is_negative || op2.is_negative) {
+        cout <<"prec\n "<<"   "<< op1.prec<<" "<< op2.prec << endl;
         if(op2.prec> op1.prec && op2.is_negative || op2.prec < op1.prec && op1.is_negative)
             is_negative = true;
         else {
-            if(op2.is_negative ) {
-                this->op1 = op2;
-                this->op2 = op1;
-            }
+//            if(op1.is_negative ) {
+//                padicRepresentation *kop = &op1;
+//                this->op1 = op2;
+//                this->op2 = *kop;
+//            }
             for (int i = max_prec - 1; i > 0; i--) {
-                if (max(op1.val, op2.val) > i) {
-                    if (op1.val > op2.val && op2.is_negative)
+                if(max(op1.val, op2.val) >i){
+                    if (op2.get(i) > op1.get(i) && op2.is_negative || op2.get(i) < op1.get(i) && op1.is_negative) {
                         is_negative = true;
-                    break;
+                        break;
+                    }
+                    else if (op2.get(i) < op1.get(i) && op2.is_negative || op2.get(i) > op1.get(i) && op1.is_negative)
+                        break;
                 }
-                if (op2.get(i) != op1.get(i) && is_negative) {
-                    is_negative = true;
+                else{
+                    if (op1.val > op2.val && op2.is_negative || op1.val < op2.val && op1.is_negative)
+                        is_negative = true;
                     break;
                 }
             }
@@ -214,24 +226,28 @@ padicSub::padicSub(padicRepresentation &op1, padicRepresentation &op2) : padicOp
     if(op1.is_negative && !op2.is_negative)
         is_negative = true;
     else if(op1.is_negative == op2.is_negative){
-        if(op1.is_negative && op2.is_negative) {
-            this->op1 = op2;
-            this->op2 = op1;
-        }
-        if(op2.prec> op1.prec)
+//        if(op1.is_negative && op2.is_negative) {
+//            padicRepresentation *kop = &op1;
+//            this->op1 = op2;
+//            this->op2 = *kop;
+//        }
+        if(op2.prec> op1.prec && !op2.is_negative || op2.prec < op1.prec && op1.is_negative)
             is_negative = true;
         else
             for (int i = max_prec; i > 0; i--) {
                 if(max(op1.val, op2.val) >i){
-                    if (op1.val > op2.val )
+                    if (op2.get(i) > op1.get(i) && !op2.is_negative || op2.get(i) < op1.get(i) && op1.is_negative) {
+                        is_negative = true;
+                        break;
+                    }
+                    else if (op2.get(i) < op1.get(i) && !op1.is_negative || op2.get(i) > op1.get(i) && op1.is_negative)
+                        break;
+                }
+                else{
+                    if (op1.val > op2.val && !op2.is_negative || op1.val < op2.val && op1.is_negative)
                         is_negative = true;
                     break;
                 }
-                if (op2.get(i) > op1.get(i)) {
-                    is_negative = true;
-                    break;
-                } else if (op2.get(i) < op1.get(i))
-                    break;
             }
     }
 
