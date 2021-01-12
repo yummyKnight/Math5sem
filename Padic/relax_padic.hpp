@@ -17,14 +17,20 @@ slong getLn(long long l);
 class padicRepresentation {
 public:
     long long get(long long i);
+    padicRepresentation() = default;
+public:
     slong prec; // long long because arithmetic operations leads to overflow
     std::vector<long long> coef;
     slong val;
     uslong prime_base;
     bool is_negative;
+
     friend std::ostream &operator<<(std::ostream &os, const padicRepresentation &number);
-    padicRepresentation() {};
+
     slong to10base();
+
+    slong convertToNegative(long long i);
+
 private:
     virtual long long next() = 0;
 };
@@ -42,26 +48,39 @@ private:
 class padicOperator : public padicRepresentation {
 public:
     slong excess = 0;
-    padicRepresentation &op1;
-    padicRepresentation &op2;
-    padicOperator(slong excess, padicRepresentation &op1, padicRepresentation &op2);
+    padicRepresentation *op1;
+    padicRepresentation *op2;
     void compute_to_max();
+
+    padicOperator(padicRepresentation *op1, padicRepresentation *op2);
+
+    padicOperator();
+
     void compute_to_N(slong N);
+
 protected:
     slong max_prec = 0;
 };
 
-class padicSum : public padicOperator {
+class padicSumSubOperator : public padicOperator {
+protected:
+    bool mode; // True for sub, false for sum
+    slong nextSum();
+    slong nextSub();
+};
+
+class padicSum : public padicSumSubOperator {
 private:
 public:
     slong next() override;
     padicSum(padicRepresentation &op1, padicRepresentation &op2);
 };
 
-class padicSub : public padicOperator {
+class padicSub : public padicSumSubOperator {
 private:
 public:
     slong next() override;
+
     padicSub(padicRepresentation &op1, padicRepresentation &op2);
 };
 
@@ -72,7 +91,7 @@ private:
 public:
     slong next() override;
     padicMul(padicRepresentation &op1, padicRepresentation &op2);
-    slong computeMul();
+
 };
 
 

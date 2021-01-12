@@ -10,13 +10,16 @@
 #include <cassert>
 #include <cmath>
 #include <algorithm>
+
 using namespace std;
 
 
 ostream &operator<<(ostream &os, const padicRepresentation &number) {
 
-    if (number.coef.empty())
+    if (number.coef.empty()){
         os << 0;
+        return os;
+    }
     uslong i = 0;
     auto coef = number.coef.at(i);
     if (!coef) {
@@ -45,7 +48,10 @@ slong padicRepresentation::to10base() {
     for (uslong i = 0; i < coef.size(); ++i) {
         base10 += coef.at(i) * pow(prime_base, i + val);
     }
-    return base10;
+    if (is_negative)
+        return -base10;
+    else
+        return base10;
 }
 
 long long padicRepresentation::get(long long i) {
@@ -64,8 +70,16 @@ long long padicRepresentation::get(long long i) {
     }
 }
 
-padicOperator::padicOperator(slong excess, padicRepresentation &op1, padicRepresentation &op2) : excess(excess),
-                                                                                                 op1(op1), op2(op2) {}
+slong padicRepresentation::convertToNegative(long long i) {
+    slong digit = get(i);
+    if (digit == 0) {
+        return digit;
+    }
+    if (i == val + 1)
+        return prime_base - digit;
+    else
+        return prime_base - digit - 1;
+}
 
 void padicOperator::compute_to_N(long long int N) {
     for (long long int i = 1; i < N + 1; ++i) {
@@ -77,6 +91,11 @@ void padicOperator::compute_to_max() {// +1 to overflow
     assert(max_prec > 0);
     compute_to_N(max_prec);
 }
+
+padicOperator::padicOperator(padicRepresentation *op1, padicRepresentation *op2) : op1(op1), op2(op2) {}
+
+padicOperator::padicOperator() {}
+
 
 bool is_prime(slong n) {
     for (int i = 2; i * i <= n; ++i) //no sqrt, please
@@ -102,8 +121,8 @@ padicNumber::padicNumber(long long base10, uslong prime_base, uslong init_prec) 
     std::vector<slong> coef;
     is_negative = base10 < 0;
     x = abs(base10);
-//    if (!is_prime(prime_base) and prime_base == 1)
-//        throw std::invalid_argument("P should be prime");
+    if (!is_prime(prime_base) and prime_base == 1)
+        throw std::invalid_argument("P should be prime");
 
     d = reduce(x, prime_base);
     while (d == 0) {
@@ -128,7 +147,6 @@ padicNumber::padicNumber(long long base10, uslong prime_base, uslong init_prec) 
 //            coef.push_back(d);
 //        }
 //    }
-
     coef.push_back(d);
     for (j = 0; x != 0 && j < init_prec - val; j++) {
         d = reduce(x, prime_base);
@@ -154,7 +172,7 @@ slong padicNumber::next() {
     return coef.back();
 }
 
-padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(0, op1, op2) {
+padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) {
     if (op1.prime_base != op2.prime_base)
         throw invalid_argument("Bases in sum should be identical");
 //  because start from 0
@@ -162,41 +180,13 @@ padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) : padicOp
     this->prec = val;
     this->prime_base = op2.prime_base;
     max_prec = max(op1.prec, op2.prec) + 1; // 1 for overflow
-    is_negative = false;
-    if(op1.is_negative && op2.is_negative)
-        is_negative = true;
-    else if (op1.is_negative || op2.is_negative) {
-        cout <<"prec\n "<<"   "<< op1.prec<<" "<< op2.prec << endl;
-        if(op2.prec> op1.prec && op2.is_negative || op2.prec < op1.prec && op1.is_negative)
-            is_negative = true;
-        else {
-//            if(op1.is_negative ) {
-//                padicRepresentation *kop = &op1;
-//                this->op1 = op2;
-//                this->op2 = *kop;
-//            }
-            for (int i = max_prec - 1; i > 0; i--) {
-                if(max(op1.val, op2.val) >i){
-                    if (op2.get(i) > op1.get(i) && op2.is_negative || op2.get(i) < op1.get(i) && op1.is_negative) {
-                        is_negative = true;
-                        break;
-                    }
-                    else if (op2.get(i) < op1.get(i) && op2.is_negative || op2.get(i) > op1.get(i) && op1.is_negative)
-                        break;
-                }
-                else{
-                    if (op1.val > op2.val && op2.is_negative || op1.val < op2.val && op1.is_negative)
-                        is_negative = true;
-                    break;
-                }
-            }
-        }
-    }
+
+
 }
 
 slong padicSum::next() {
-    uslong base = op2.prime_base;
-    slong t = op1.get(prec) + op2.get(prec) + excess;
+    uslong base = op2->prime_base;
+    slong t = op1->get(prec) + op2->get(prec) + excess;
     if (t < base) {
         excess = 0;
         coef.push_back(t);
@@ -213,101 +203,69 @@ slong padicSum::next() {
     }
 }
 
-padicSub::padicSub(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(0, op1, op2) {
+padicSub::padicSub(padicRepresentation &op1, padicRepresentation &op2){
     if (op1.prime_base != op2.prime_base)
         throw invalid_argument("Bases in sum should be identical");
 //  because start from 0
     this->val = min(op1.val, op2.val);
     this->prec = val;
     this->prime_base = op2.prime_base;
-    max_prec = max(op1.prec, op2.prec);
-    is_negative = false;
-    cout << "negative  "<< is_negative<< " " <<op1.is_negative <<"  "<< op2.is_negative << endl;
-    if(op1.is_negative && !op2.is_negative)
+    max_prec = max(op1.prec, op2.prec) + 1; // 1 for overflow from nextSum
+    slong tmp;
+    for (slong j = 1; j < max_prec; ++j) {
+        tmp =  op1.get(j);
+        tmp =  op2.get(j);
+    }
+    this->op1 = &op1;
+    this->op2 = &op2;
+    bool is_inversed = false;
+    // op1 should be >= op2
+    for (int i = max_prec; i > 0; i--) {
+        if (op1.get(i) > op2.get(i)) {
+            break;
+        } else if (op1.get(i) < op2.get(i)) {
+            this->op1 = &op2;
+            this->op2 = &op1;
+            is_inversed = true;
+            break;
+        }
+    }
+    if (this->op1->is_negative and this->op2->is_negative) {
+        mode = true;
         is_negative = true;
-    else if(op1.is_negative == op2.is_negative){
-//        if(op1.is_negative && op2.is_negative) {
-//            padicRepresentation *kop = &op1;
-//            this->op1 = op2;
-//            this->op2 = *kop;
-//        }
-        if(op2.prec> op1.prec && !op2.is_negative || op2.prec < op1.prec && op1.is_negative)
-            is_negative = true;
-        else
-            for (int i = max_prec; i > 0; i--) {
-                if(max(op1.val, op2.val) >i){
-                    if (op2.get(i) > op1.get(i) && !op2.is_negative || op2.get(i) < op1.get(i) && op1.is_negative) {
-                        is_negative = true;
-                        break;
-                    }
-                    else if (op2.get(i) < op1.get(i) && !op1.is_negative || op2.get(i) > op1.get(i) && op1.is_negative)
-                        break;
-                }
-                else{
-                    if (op1.val > op2.val && !op2.is_negative || op1.val < op2.val && op1.is_negative)
-                        is_negative = true;
-                    break;
-                }
-            }
+    } else if (!this->op1->is_negative and this->op2->is_negative) {
+        mode = false;
+        is_negative = false;
+    } else if (this->op1->is_negative and !this->op2->is_negative) {
+        mode = false;
+        is_negative = true;
+    } else if (!this->op1->is_negative and !this->op2->is_negative) {
+        mode = true;
+        is_negative = false;
     }
 
+    if (is_inversed)
+        is_negative = !is_negative;
 }
 
 slong padicSub::next() {
-    uslong base = op2.prime_base;
-    long long t = op1.get(prec) - op2.get(prec) - excess;
-    if (t >= 0) {
-        excess = 0;
-        // check if leading zero
-        if (t == 0 && prec - 1 - val == 0)
-            this->val++;
-        else
-            coef.push_back(t);
-        return t;
-    } else {
-        excess = 1;
-        slong res = t + base;
-        coef.push_back(res);
-        return res;
-    }
+    if (mode) return nextSub();
+    else return nextSum();
 }
 
-padicMul::padicMul(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(0, op1, op2) {
+padicMul::padicMul(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(&op1, &op2) {
     if (op1.prime_base != op2.prime_base)
         throw invalid_argument("Bases in Mul should be identical");
 //  because start from 0
     // TODO: val == 0 ONLY for tests
     this->val = 0;
-    this->is_negative = op1.is_negative^op2.is_negative;
+    this->is_negative = op1.is_negative ^ op2.is_negative;
     // TODO: prec = val
     this->prec = 0;
     this->prime_base = op2.prime_base;
     max_prec = op1.prec + op2.prec - 1;
 
 }
-
-slong padicMul::computeMul() {
-    // НЕ готов
-    uslong base = op2.prime_base;
-    long long t =0;// op1.next(prec) - op2.next(prec) - excess;
-
-    if (t >= 0) {
-        excess = 0;
-        // check if leading zero
-        if (t == 0 && prec - 1 - val == 0)
-            this->val++;
-        else
-            coef.push_back(t);
-        return t;
-    } else {
-        excess = 1;
-        slong res = t + base;
-        coef.push_back(res);
-        return res;
-    }
-    return 0;
-}
-
 slong getLn(slong n) {
 
     slong l = 0, mul_l = 2, n_2 = n + 2;
@@ -321,7 +279,7 @@ slong getLn(slong n) {
 }
 
 slong padicMul::next() {
-    slong n = prec-1;
+    slong n = prec - 1;
     slong ta = 0, tb = 0;
     //std::cout << "     " <<n <<"      "<< std::endl;
     // начало алгоритма умножения
@@ -329,15 +287,15 @@ slong padicMul::next() {
     ;
 
     slong l2n = getLn(n * 2), ln = getLn(n), l2n1 = getLn(n * 2 + 1);
-    std::vector<slong> ya_new(l2n + 1, 0), yb_new( l2n + 1, 0);
-    std::vector<slong> ya1_new( l2n1 + 1, 0), yb1_new( l2n1 + 1, 0);
+    std::vector<slong> ya_new(l2n + 1, 0), yb_new(l2n + 1, 0);
+    std::vector<slong> ya1_new(l2n1 + 1, 0), yb1_new(l2n1 + 1, 0);
     ya.push_back(ya_new);
     ya.push_back(ya1_new);
     yb.push_back(yb_new);
     yb.push_back(yb1_new);
 
-    op1.get(n+1);
-    op2.get(n+1);
+    op1->get(n + 1);
+    op2->get(n + 1);
     // вычисление алгоритмов
     slong coef_a, coef_b, left, right;
     slong pow_prime = 1;
@@ -345,30 +303,30 @@ slong padicMul::next() {
     for (slong q = 0; q <= ln; q++) {
         //std::cout << "q " << q <<" "<< std::endl;
         slong q_2 = pow(2, q);
-        slong  k = (n + 2) / q_2;
+        slong k = (n + 2) / q_2;
         ta += ya.at(n).at(q);
         tb += yb.at(n).at(q);
-        slong coef_a = 0, coef_b = 0, left = q_2, right = q_2 * 2-1;
+        slong coef_a = 0, coef_b = 0, left = q_2, right = q_2 * 2 - 1;
         pow_prime = 1;
-        for (slong i = left-1, i_k = left*(k-1)-1 ; i < right; i++,i_k++) {
+        for (slong i = left - 1, i_k = left * (k - 1) - 1; i < right; i++, i_k++) {
             // compute to N
             //std::cout << "+ " << i <<" "<< i * (k-1) - 1<< std::endl;
-            coef_a += op1.get(i+1) * pow_prime;
-            coef_b += op2.get(i_k+1) * pow_prime;
+            coef_a += op1->get(i + 1) * pow_prime;
+            coef_b += op2->get(i_k + 1) * pow_prime;
             //assert(n != 4 || q !=1 || i != 3) ;
             pow_prime *= this->prime_base;
         }
 
         ta += coef_a * coef_b;
-        if (k == 2) {break;}
+        if (k == 2) { break; }
 
         coef_a = 0;
         coef_b = 0;
         pow_prime = 1;
 
-        for (slong i = left-1, i_k = left*(k-1)-1 ; i < right; i++,i_k++) {
-            coef_a += op1.get( i_k+1 ) * pow_prime;
-            coef_b += op2.get( i +1) * pow_prime;
+        for (slong i = left - 1, i_k = left * (k - 1) - 1; i < right; i++, i_k++) {
+            coef_a += op1->get(i_k + 1) * pow_prime;
+            coef_b += op2->get(i + 1) * pow_prime;
             pow_prime *= this->prime_base;
         }
 
@@ -380,17 +338,17 @@ slong padicMul::next() {
     slong sa = ta;
 
     pow_prime = 1;
-    if (this->coef.size() < n + right+1)
+    if (this->coef.size() < n + right + 1)
         this->coef.resize(n + right, 0);
     //std::cout << coef.size();
     for (slong i = n; i < n + right; i++) {
-        sa += this->coef.at(i- val) * pow_prime;
+        sa += this->coef.at(i - val) * pow_prime;
         pow_prime *= this->prime_base;
     }
 
     pow_prime = 1;
     for (slong i = 0; i < right; i++) {
-        this->coef.at(n + i- val) = sa / pow_prime % this->prime_base;
+        this->coef.at(n + i - val) = sa / pow_prime % this->prime_base;
         pow_prime *= this->prime_base;
     }
     if (n + 2 != right)
@@ -401,7 +359,7 @@ slong padicMul::next() {
     right = pow(2, ln + 1);
 
     for (slong i = n; i < n + right; i++) {
-        sb += this->coef.at(i- val) * pow_prime;
+        sb += this->coef.at(i - val) * pow_prime;
         pow_prime *= this->prime_base;
     }
     pow_prime = 1;
@@ -411,15 +369,53 @@ slong padicMul::next() {
     }
 
     if (n + 2 != right) {
-        yb.at(n + right ).at(ln) = sb / pow_prime;
+        yb.at(n + right).at(ln) = sb / pow_prime;
     }
 
     //std::cout << "sa sb       " << sa <<" "<< sb << " " << this->coef.at(n-val)<< std::endl;
 
-    if (coef.at(n-val) == 0 && n == this->val) {
+    if (coef.at(n - val) == 0 && n == this->val) {
         //std::cout << "coef  n  val  " << coef.at(n-val) <<" "<< n << " " << val<< std::endl;
         this->val++;
-        coef.erase(coef.begin() );
+        coef.erase(coef.begin());
     }
     return this->coef.at(n);
+}
+
+slong padicSumSubOperator::nextSum() {
+    uslong base = op2->prime_base;
+    slong t = op1->get(prec) + op2->get(prec) + excess;
+    if (t < base) {
+        excess = 0;
+        coef.push_back(t);
+        return t;
+    } else {
+        excess = 1;
+        slong res = t - base;
+        // check if leading zero
+        if (res == 0 && prec - 1 - val == 0)
+            this->val++;
+        else
+            coef.push_back(res);
+        return res;
+    }
+}
+
+slong padicSumSubOperator::nextSub() {
+    uslong base = op2->prime_base;
+    long long t = op1->get(prec) - op2->get(prec) - excess;
+    if (t >= 0) {
+        excess = 0;
+        // check if leading zero
+        if (t == 0 && prec - 1 - val == 0)
+            this->val++;
+        else
+            coef.push_back(t);
+        return t;
+    } else {
+        excess = 1;
+        slong res = t + base;
+        coef.push_back(res);
+        return res;
+    }
 }
