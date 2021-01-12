@@ -16,11 +16,11 @@ int main() {
 //    padicSub tmp_sum = padicSub(test2_1, test2_2);
 //    tmp_sum.compute_to_max();
 //    cout << tmp_sum << endl;
-    padicNumber test2_1 = padicNumber(500 ,5);
-    padicNumber test2_2 = padicNumber(-600, 5);
+    padicNumber test2_1 = padicNumber(15489 ,5);
+    padicNumber test2_2 = padicNumber(2497, 5);
     cout << test2_1 << endl;
     cout << test2_2 << endl;
-    padicSub tmp = padicSub(test2_1, test2_2);
+    padicSum tmp = padicSum(test2_1, test2_2);
     tmp.compute_to_max();
     cout << tmp << endl;
     cout << tmp.to10base() << endl;

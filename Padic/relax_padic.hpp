@@ -67,20 +67,21 @@ protected:
     bool mode; // True for sub, false for sum
     slong nextSum();
     slong nextSub();
+public:
+    padicSumSubOperator(padicRepresentation &op1, padicRepresentation &op2);
+private:
+    long long int next() override;
 };
 
 class padicSum : public padicSumSubOperator {
 private:
 public:
-    slong next() override;
     padicSum(padicRepresentation &op1, padicRepresentation &op2);
 };
 
 class padicSub : public padicSumSubOperator {
 private:
 public:
-    slong next() override;
-
     padicSub(padicRepresentation &op1, padicRepresentation &op2);
 };
 

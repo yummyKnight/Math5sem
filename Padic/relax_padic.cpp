@@ -16,7 +16,7 @@ using namespace std;
 
 ostream &operator<<(ostream &os, const padicRepresentation &number) {
 
-    if (number.coef.empty()){
+    if (number.coef.empty()) {
         os << 0;
         return os;
     }
@@ -172,7 +172,7 @@ slong padicNumber::next() {
     return coef.back();
 }
 
-padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) {
+padicSumSubOperator::padicSumSubOperator(padicRepresentation &op1, padicRepresentation &op2) {
     if (op1.prime_base != op2.prime_base)
         throw invalid_argument("Bases in sum should be identical");
 //  because start from 0
@@ -181,10 +181,30 @@ padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) {
     this->prime_base = op2.prime_base;
     max_prec = max(op1.prec, op2.prec) + 1; // 1 for overflow
 
-
+    slong tmp;
+    for (slong j = 1; j < max_prec; ++j) {
+        tmp = op1.get(j);
+        tmp = op2.get(j);
+    }
+    this->op1 = &op1;
+    this->op2 = &op2;
+    bool is_inversed = false;
+    // op1 should be >= op2
+    for (int i = max_prec; i > 0; i--) {
+        if (op1.get(i) > op2.get(i)) {
+            break;
+        } else if (op1.get(i) < op2.get(i)) {
+            this->op1 = &op2;
+            this->op2 = &op1;
+            is_inversed = true;
+            break;
+        }
+    }
+    if (is_inversed)
+        is_negative = !is_negative;
 }
 
-slong padicSum::next() {
+slong padicSumSubOperator::nextSum() {
     uslong base = op2->prime_base;
     slong t = op1->get(prec) + op2->get(prec) + excess;
     if (t < base) {
@@ -203,33 +223,50 @@ slong padicSum::next() {
     }
 }
 
-padicSub::padicSub(padicRepresentation &op1, padicRepresentation &op2){
-    if (op1.prime_base != op2.prime_base)
-        throw invalid_argument("Bases in sum should be identical");
-//  because start from 0
-    this->val = min(op1.val, op2.val);
-    this->prec = val;
-    this->prime_base = op2.prime_base;
-    max_prec = max(op1.prec, op2.prec) + 1; // 1 for overflow from nextSum
-    slong tmp;
-    for (slong j = 1; j < max_prec; ++j) {
-        tmp =  op1.get(j);
-        tmp =  op2.get(j);
+slong padicSumSubOperator::nextSub() {
+    uslong base = op2->prime_base;
+    long long t = op1->get(prec) - op2->get(prec) - excess;
+    if (t >= 0) {
+        excess = 0;
+        // check if leading zero
+        if (t == 0 && prec - 1 - val == 0)
+            this->val++;
+        else
+            coef.push_back(t);
+        return t;
+    } else {
+        excess = 1;
+        slong res = t + base;
+        coef.push_back(res);
+        return res;
     }
-    this->op1 = &op1;
-    this->op2 = &op2;
-    bool is_inversed = false;
-    // op1 should be >= op2
-    for (int i = max_prec; i > 0; i--) {
-        if (op1.get(i) > op2.get(i)) {
-            break;
-        } else if (op1.get(i) < op2.get(i)) {
-            this->op1 = &op2;
-            this->op2 = &op1;
-            is_inversed = true;
-            break;
-        }
+}
+
+long long int padicSumSubOperator::next() {
+    if (mode) return nextSub();
+    else return nextSum();
+}
+
+padicSum::padicSum(padicRepresentation &op1, padicRepresentation &op2) : padicSumSubOperator(op1, op2) {
+    if (this->op1->is_negative and this->op2->is_negative) {
+        mode = false;
+        is_negative = true;
+
+    } else if (!this->op1->is_negative and this->op2->is_negative) {
+        mode = true;
+        is_negative = false;
+
+    } else if (this->op1->is_negative and !this->op2->is_negative) {
+        mode = true;
+        is_negative = true;
+
+    } else if (!this->op1->is_negative and !this->op2->is_negative) {
+        mode = false;
+        is_negative = false;
     }
+
+}
+padicSub::padicSub(padicRepresentation &op1, padicRepresentation &op2) : padicSumSubOperator(op1, op2) {
     if (this->op1->is_negative and this->op2->is_negative) {
         mode = true;
         is_negative = true;
@@ -243,14 +280,6 @@ padicSub::padicSub(padicRepresentation &op1, padicRepresentation &op2){
         mode = true;
         is_negative = false;
     }
-
-    if (is_inversed)
-        is_negative = !is_negative;
-}
-
-slong padicSub::next() {
-    if (mode) return nextSub();
-    else return nextSum();
 }
 
 padicMul::padicMul(padicRepresentation &op1, padicRepresentation &op2) : padicOperator(&op1, &op2) {
@@ -266,6 +295,7 @@ padicMul::padicMul(padicRepresentation &op1, padicRepresentation &op2) : padicOp
     max_prec = op1.prec + op2.prec - 1;
 
 }
+
 slong getLn(slong n) {
 
     slong l = 0, mul_l = 2, n_2 = n + 2;
@@ -382,40 +412,3 @@ slong padicMul::next() {
     return this->coef.at(n);
 }
 
-slong padicSumSubOperator::nextSum() {
-    uslong base = op2->prime_base;
-    slong t = op1->get(prec) + op2->get(prec) + excess;
-    if (t < base) {
-        excess = 0;
-        coef.push_back(t);
-        return t;
-    } else {
-        excess = 1;
-        slong res = t - base;
-        // check if leading zero
-        if (res == 0 && prec - 1 - val == 0)
-            this->val++;
-        else
-            coef.push_back(res);
-        return res;
-    }
-}
-
-slong padicSumSubOperator::nextSub() {
-    uslong base = op2->prime_base;
-    long long t = op1->get(prec) - op2->get(prec) - excess;
-    if (t >= 0) {
-        excess = 0;
-        // check if leading zero
-        if (t == 0 && prec - 1 - val == 0)
-            this->val++;
-        else
-            coef.push_back(t);
-        return t;
-    } else {
-        excess = 1;
-        slong res = t + base;
-        coef.push_back(res);
-        return res;
-    }
-}
